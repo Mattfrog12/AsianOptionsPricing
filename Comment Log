@@ -1,0 +1,30 @@
+Comment 1: 
+A pressing question is why we would price Asian options with deep learning in the first place.
+The most common pricing method currently for Asian options (that use arithmetic averages) is 
+with monte carlo simulations. The issue with this approach is that many iterations are needed,
+and the parameter space needs to be updated repeatedly. Once a deep learning model is trained,
+it only needs the current parameter values and will return a predicted value quickly, only 
+having to reference its own price distribution.   
+
+
+Comment 2: 
+We need a reasonable range for our parameters. As I read more of the literature I will 
+hone in on fair ranges, but for now we will take Claude's word on the following: 
+
+Spot Price S - Fixed at 100 (Not necessary to vary it, we care about the relationship between S and K.
+Strike Price K - [70,130] (Covering deep ITM, ATM, and deep OTM)
+Risk-Free Rate r - [0.01,0.10]
+Volatility v (usually called sigma but the meaning of v is clear) - [0.05,0.60]
+Time to Maturity T - [0.1,2.0] (Years)
+Number of Dates to Average n - 12 (monthly), 52 (weekly), and 252 (daily).
+
+
+Comment 3: 
+Now we need to address how we will generate our data. Two viable are with uniform sampling
+from each parameter range, and Latin hypercube sampling (LHS). LHS is just going to ensure that we more
+thoroughly fill the space, as with six dimensions it is not clear how many samples it will take for 
+the uniform approach to do the same. 
+
+We will also start by generating 100k sample options, but may increase this number in future iterations.
+Due to the relative niceness and simplicity of the problem, we may not need the huge amount of data that 
+deep learning is known for.

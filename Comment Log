@@ -20,7 +20,7 @@ Number of Dates to Average n - 12 (monthly), 52 (weekly), and 252 (daily).
 
 
 Comment 3: 
-Now we need to address how we will generate our data. Two viable are with uniform sampling
+Now we need to address how we will generate our data. Two viable methods are with uniform sampling
 from each parameter range, and Latin hypercube sampling (LHS). LHS is just going to ensure that we more
 thoroughly fill the space, as with six dimensions it is not clear how many samples it will take for 
 the uniform approach to do the same. 
@@ -28,3 +28,12 @@ the uniform approach to do the same.
 We will also start by generating 100k sample options, but may increase this number in future iterations.
 Due to the relative niceness and simplicity of the problem, we may not need the huge amount of data that 
 deep learning is known for.
+
+
+Comment 4: 
+We have priced with monte carlo sims and parqueted that price data to save it. Now we can build and train 
+our deep learning model.
+
+Comment 5: 
+We are going to use X layers with (list of units). We are going to use (this optimization method) and 
+(this loss function). We are choosing these values because (). 

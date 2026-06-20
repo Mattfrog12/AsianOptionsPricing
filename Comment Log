@@ -50,7 +50,7 @@ to overfit. We are using 256 layers each without decreasing because we do not wa
 common in classification, for instance. Because activation inputs in intermediate layers are liable to 
 take on a huge spread of values (can be very small to in the hundreds, for instance) we are using
 batch normalization to control that spread. ReLU is going to be used because (give a good justification).
-Our loss function will be mean-squared error. It's arguable that this is the best test as we are penalizing
+Our loss function will be mean-squared error. It's arguable if this is the best test as we are penalizing
 a $1 error on a $5 option the same way as a $1 option on a $30 option, which is obviously not great. But it 
 establishes a baseline for us to refer to. Finally, our learning rate is going to be 0.001 as is the norm. 
 We are going to have a trigger in case we plateau for too long so as not to overfit or continue running epochs

@@ -1,0 +1,184 @@
+import numpy as np
+from scipy.stats.qmc import LatinHypercube, scale
+from joblib import Parallel, delayed, dump
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+
+# Flexibility in how much data we want to generate
+N = 100_000
+
+# Five dimensions, replicable seed
+lhs = LatinHypercube(d=5, seed=20)
+sample = lhs.random(n=N)
+
+# Scale to your ranges [low, high]
+l_bounds = [70,  0.01, 0.05, 0.1]
+u_bounds = [130, 0.10, 0.60, 2.0]
+
+scaled = scale(sample[:, :4], l_bounds, u_bounds)
+
+K     = scaled[:, 0]
+r     = scaled[:, 1]
+sigma = scaled[:, 2]
+T     = scaled[:, 3]
+S     = np.full(N, 100.0)
+
+# Randomly sample monthly, weekly, or daily average
+rng = np.random.default_rng(20)
+n_dates = rng.choice([12, 52, 252], size=N)
+
+# For a baseline pricing method, we'll use Monte Carlo with GBM
+def price_asian_call_mc(S, K, r, sigma, T, n, n_paths=50_000, seed=None):
+    rng = np.random.default_rng(seed)
+
+    dt = T / n
+
+    # "Random shock" component of GBM
+    Z = rng.standard_normal((n_paths, n))
+
+    # GBM log-price increments
+    increments = (r - 0.5 * sigma ** 2) * dt + sigma * np.sqrt(dt) * Z
+
+    # Cumulative sum gives log-price at each date
+    log_S = np.log(S) + np.cumsum(increments, axis=1)
+    S_paths = np.exp(log_S)
+
+    # Arithmetic average across monitoring dates
+    S_avg = S_paths.mean(axis=1)  # shape: (n_paths,)
+
+    # Discounted expected payoff
+    payoff = np.maximum(S_avg - K, 0)
+    price = np.exp(-r * T) * payoff.mean()
+
+    return price
+
+# Wrapper function to get parameters back from tuple
+def price_one(args):
+    S, K, r, sigma, T, n = args
+    return price_asian_call_mc(S, K, r, sigma, T, n, n_paths=50_000)
+
+
+# Creates list of tuples for each sample option
+args = list(zip(S, K, r, sigma, T, n_dates))
+
+# Running Monte Carlo sims to price the sample options
+prices = Parallel(n_jobs=-1)(delayed(price_one)(arg) for arg in args)
+
+df = pd.DataFrame({
+    'S': S, 'K': K, 'r': r, 'sigma': sigma, 'T': T, 'n': n_dates,
+    'price': prices
+})
+df.to_parquet('C:\\Users\\matth\\Downloads\\asian_options_monte_carlo.parquet', index=False)
+
+df = pd.read_parquet('C:\\Users\\matth\\Downloads\\asian_options_monte_carlo.parquet')
+
+# Getting feature and target vectors
+X = df[['S', 'K', 'r', 'sigma', 'T', 'n']].values
+y = df['price'].values.reshape(-1, 1)
+
+# 80% Training data, 10% Validation, 10% Testing
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=20)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=20)
+
+scaler_X = StandardScaler()
+scaler_y = StandardScaler()
+
+# Grabs mean and std dev, applies z-score normalization
+X_train = scaler_X.fit_transform(X_train)
+X_val   = scaler_X.transform(X_val)
+X_test  = scaler_X.transform(X_test)
+
+y_train = scaler_y.fit_transform(y_train)
+y_val   = scaler_y.transform(y_val)
+y_test  = scaler_y.transform(y_test)
+
+# Model
+model = keras.Sequential([
+    # 6 parameters to input
+    layers.Input(shape=(6,)),
+    # 5 layers, all 256 nodes to prevent bottlenecking, relu.
+    layers.Dense(256), layers.BatchNormalization(), layers.Activation('relu'),
+    layers.Dense(256), layers.BatchNormalization(), layers.Activation('relu'),
+    layers.Dense(256), layers.BatchNormalization(), layers.Activation('relu'),
+    layers.Dense(256), layers.BatchNormalization(), layers.Activation('relu'),
+    layers.Dense(256), layers.BatchNormalization(), layers.Activation('relu'),
+
+    layers.Dense(1)
+])
+
+model.compile(
+    optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+    loss='mse'
+)
+
+# Callbacks to prevent redundant\useless work
+early_stopping = keras.callbacks.EarlyStopping(
+    monitor='val_loss',
+    patience=10,
+    restore_best_weights=True
+)
+
+history = model.fit(
+    X_train, y_train,
+    validation_data=(X_val, y_val),
+    epochs=100,
+    batch_size=1024,
+    callbacks=[early_stopping]
+)
+
+# Saving model and scalers for reuse and safety
+model.save('asian_option_pricer.keras')
+dump(scaler_X, 'scaler_X.pkl')
+dump(scaler_y, 'scaler_y.pkl')
+
+# Get predictions on test set
+y_pred_scaled = model.predict(X_test)
+
+# Transforming back to regular prices
+y_pred = scaler_y.inverse_transform(y_pred_scaled)
+y_true = scaler_y.inverse_transform(y_test)
+
+rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+mae  = mean_absolute_error(y_true, y_pred)
+
+print(f"RMSE: ${rmse:.4f}")
+print(f"MAE:  ${mae:.4f}")
+
+# The following indented code is for the improved neural net 
+    early_stopping = keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=20,
+        restore_best_weights=True
+    )
+    
+    # Halve learning rate at plateaus 
+    lr_schedule = keras.callbacks.ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=0.5,
+        patience=5
+    )
+    
+    history = model.fit(
+        X_train, y_train,
+        validation_data=(X_val, y_val),
+        epochs=200,
+        batch_size=1024,
+        callbacks=[early_stopping, lr_schedule]
+    )
+    
+    y_pred_scaled = model.predict(X_test)
+    y_pred = scaler_y.inverse_transform(y_pred_scaled)
+    y_true = scaler_y.inverse_transform(y_test)
+    
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    mae  = mean_absolute_error(y_true, y_pred)
+    
+    print(f"RMSE: ${rmse:.4f}")
+    print(f"MAE:  ${mae:.4f}")
+    
+    model.save('asian_option_pricer_2.keras')

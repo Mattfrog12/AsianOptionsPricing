@@ -23,7 +23,8 @@ Comment 3:
 Now we need to address how we will generate our data. Two viable methods are with uniform sampling
 from each parameter range, and Latin hypercube sampling (LHS). LHS is just going to ensure that we more
 thoroughly fill the space, as with six dimensions it is not clear how many samples it will take for 
-the uniform approach to do the same. 
+the uniform approach to do the same. There is also the problem of clustered data which uniform sampling 
+is prone to.
 
 We will also start by generating 100k sample options, but may increase this number in future iterations.
 Due to the relative niceness and simplicity of the problem, we may not need the huge amount of data that 

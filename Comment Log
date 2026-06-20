@@ -8,7 +8,7 @@ having to reference its own price distribution.
 
 
 Comment 2: 
-We need a reasonable range for our parameters. As I read more of the literature I will 
+We need a reasonable range for our parameters. As we read more of the literature we will 
 hone in on fair ranges, but for now we will take Claude's word on the following: 
 
 Spot Price S - Fixed at 100 (Not necessary to vary it, we care about the relationship between S and K.

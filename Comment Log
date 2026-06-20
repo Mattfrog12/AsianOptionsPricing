@@ -29,11 +29,39 @@ We will also start by generating 100k sample options, but may increase this numb
 Due to the relative niceness and simplicity of the problem, we may not need the huge amount of data that 
 deep learning is known for.
 
+Comment 4:
+The average option price came out to about $11.87, with a standard deviation of $9.56. The minimum price
+was $0.00 (worthless), up to $36.88.  
 
-Comment 4: 
-We have priced with monte carlo sims and parqueted that price data to save it. Now we can build and train 
-our deep learning model.
 
 Comment 5: 
-We are going to use X layers with (list of units). We are going to use (this optimization method) and 
-(this loss function). We are choosing these values because (). 
+We have priced with monte carlo sims (50,000 paths each) and parqueted that price data to save it. 
+To prepare our data, we scale our data using z-score normalization so that we don't have to weight 
+uneccesarily since our features are all on different scales. Now we can build and train our deep
+learning model.
+
+
+Comment 6: 
+We are going to use 5 layers with 256 units each. We have not chosen to sue substantially more layers due 
+to the relative simplicity and smoothness of the underlying price surface. We also of course do not want
+to overfit. We are using 256 layers each without decreasing because we do not want to bottleneck as is 
+common in classification, for instance. Because activation inputs in intermediate layers are liable to 
+take on a huge spread of values (can be very small to in the hundreds, for instance) we are using
+batch normalization to control that spread. ReLU is going to be used because (give a good justification).
+Our loss function will be mean-squared error. It's arguable that this is the best test as we are penalizing
+a $1 error on a $5 option the same way as a $1 option on a $30 option, which is obviously not great. But it 
+establishes a baseline for us to refer to. Finally, our learning rate is going to be 0.001 as is the norm. 
+We are going to have a trigger in case we plateau for too long so as not to overfit or continue running epochs
+to no good end.
+
+Comment 7: 
+We got a mean average error (MAE) of 25 cents. We believe that the model exited early due to aggressive stopping
+protocols and the learning rate caused our loss function to jump around as opposed to converging. 
+
+
+Comment 8: Relaxing our stopping protocol as well as having a decaying learning rate greatly improved our model's 
+accuracy. In the same amount of epochs, we went from the previous MAE to 7 cents. With an average option price of
+$12, this comes out to about 0.6% error on average. Note that some of the extra pricing noise can simply come from
+the fact that we only used 50k paths in our monte carlo sim. We will want to up this amount by the end, as well as
+implement the Heston method as discussed. 
+

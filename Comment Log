@@ -30,6 +30,7 @@ We will also start by generating 100k sample options, but may increase this numb
 Due to the relative niceness and simplicity of the problem, we may not need the huge amount of data that 
 deep learning is known for.
 
+
 Comment 4:
 The average option price came out to about $11.87, with a standard deviation of $9.56. The minimum price
 was $0.00 (worthless), up to $36.88.  
@@ -54,6 +55,7 @@ a $1 error on a $5 option the same way as a $1 option on a $30 option, which is 
 establishes a baseline for us to refer to. Finally, our learning rate is going to be 0.001 as is the norm. 
 We are going to have a trigger in case we plateau for too long so as not to overfit or continue running epochs
 to no good end.
+
 
 Comment 7: 
 We got a mean average error (MAE) of 25 cents. We believe that the model exited early due to aggressive stopping

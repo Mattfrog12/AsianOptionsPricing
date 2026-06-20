@@ -11,10 +11,10 @@ Comment 2:
 We need a reasonable range for our parameters. As we read more of the literature we will 
 hone in on fair ranges, but for now we will take Claude's word on the following: 
 
-Spot Price S - Fixed at 100 (Not necessary to vary it, we care about the relationship between S and K.
+Spot Price S - Fixed at 100 (Not necessary to vary it, we care about the relationship between S and K)
 Strike Price K - [70,130] (Covering deep ITM, ATM, and deep OTM)
 Risk-Free Rate r - [0.01,0.10]
-Volatility v (usually called sigma but the meaning of v is clear) - [0.05,0.60]
+Volatility sigma - [0.05,0.60]
 Time to Maturity T - [0.1,2.0] (Years)
 Number of Dates to Average n - 12 (monthly), 52 (weekly), and 252 (daily).
 

@@ -44,7 +44,7 @@ learning model.
 
 
 Comment 6: 
-We are going to use 5 layers with 256 units each. We have not chosen to sue substantially more layers due 
+We are going to use 5 layers with 256 units each. We have not chosen to use substantially more layers due 
 to the relative simplicity and smoothness of the underlying price surface. We also of course do not want
 to overfit. We are using 256 layers each without decreasing because we do not want to bottleneck as is 
 common in classification, for instance. Because activation inputs in intermediate layers are liable to 

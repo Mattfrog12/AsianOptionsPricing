@@ -68,3 +68,12 @@ $12, this comes out to about 0.6% error on average. Note that some of the extra 
 the fact that we only used 50k paths in our monte carlo sim. We will want to up this amount by the end, as well as
 implement the Heston method as discussed. 
 
+
+Comment 9:
+Before continuing to optimize the neural net, we are again using Monte Carlo gbm to generate prices, but this time with 
+500k paths. This alone should give us better results because there will be less noise between adjacent data
+points, so the model can more accurately reflect the true, smoother price surface. It is worth mentioning that since
+we are currently using gbm, the "true" price surface is actually the price surface given arbitrarily many Monte Carlo
+sims with gbm. If\when we want a surface that even more closely approximates the true price surface for Asian options, 
+we would use the Heston or Volterra-Heston model, both of which we hope to explore further soon. 
+
